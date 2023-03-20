@@ -223,27 +223,17 @@ class MultibodyPlantDiagram:
     # pylint: disable=too-few-public-methods
     sim: Simulator
     plant: MultibodyPlant
-    scene_graph: SceneGraph
+    scene_graph: Optional[SceneGraph]
     visualizer: Optional[VideoWriter]
     model_ids: List[ModelInstanceIndex]
-    collision_geometry_set: CollisionGeometrySet
+    collision_geometry_set: Optional[CollisionGeometrySet]
     space: state_space.ProductSpace
 
-    def __init__(self,
-                 urdfs: Dict[str, str],
-                 dt: float = DEFAULT_DT,
-                 enable_visualizer: bool = False) -> None:
-        r"""Initialization generates a world containing each given URDF as a
-        model instance, and a corresponding Drake ``Simulator`` set up to
-        trigger a state update every ``dt``.
-
-        By default, a ground plane is added at world height ``z = 0``.
-
-        Args:
-            urdfs: Names and corresponding URDFs to add as models to plant.
-            dt: Time step of plant in seconds.
-            enable_visualizer: Whether to add visualization system to diagram.
-        """
+    @staticmethod
+    def from_urdfs(
+            urdfs: Dict[str, str],
+            dt: float = DEFAULT_DT,
+            enable_visualizer: bool = False) -> None:
         builder = DiagramBuilder()
         model_ids, plant, scene_graph = add_plant_from_urdfs(builder, urdfs, dt)
 
@@ -268,12 +258,41 @@ class MultibodyPlantDiagram:
                                      GROUND_COLOR)
 
         # get collision candidates before default context filters for proximity.
-        self.collision_geometry_set = get_collision_geometry_set(
+        collision_geometry_set = get_collision_geometry_set(
             scene_graph.model_inspector())
 
         # Builds and initialize simulator from diagram
         plant.Finalize()
         diagram = builder.Build()
+
+        return MultibodyPlantDiagram(
+            diagram=diagram,
+            plant=plant,
+            model_ids=model_ids,
+            scene_graph=scene_graph,
+            collision_geometry_set=collision_geometry_set,
+            visualizer=visualizer,
+        )
+
+    def __init__(self,
+                 diagram: Diagram,
+                 plant: MultibodyPlant,
+                 model_ids: List[ModelInstanceIndex],
+                 scene_graph: SceneGraph,
+                 collision_geometry_set: Optional[CollisionGeometrySet],
+                 visualizer: Optional[System]) -> None:
+        r"""Initialization generates a world containing each given URDF as a
+        model instance, and a corresponding Drake ``Simulator`` set up to
+        trigger a state update every ``dt``.
+
+        By default, a ground plane is added at world height ``z = 0``.
+
+        Args:
+            urdfs: Names and corresponding URDFs to add as models to plant.
+            dt: Time step of plant in seconds.
+            enable_visualizer: Whether to add visualization system to diagram.
+        """
+
         diagram.CreateDefaultContext()
         sim = Simulator(diagram)
         sim.Initialize()
