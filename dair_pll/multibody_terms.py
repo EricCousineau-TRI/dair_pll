@@ -51,9 +51,13 @@ from dair_pll import drake_utils
 from dair_pll.deep_support_function import extract_mesh
 from dair_pll.drake_state_converter import DrakeStateConverter
 from dair_pll.drake_utils import MultibodyPlantDiagram
-from dair_pll.geometry import GeometryCollider, \
-    PydrakeToCollisionGeometryFactory, \
-    CollisionGeometry, DeepSupportConvex
+
+# HACK
+# from dair_pll.geometry import GeometryCollider, \
+#     PydrakeToCollisionGeometryFactory, \
+#     CollisionGeometry, DeepSupportConvex
+CollisionGeometry = "CollisionGeometry"
+
 from dair_pll.inertia import InertialParameterConverter
 from dair_pll.system import MeshSummary
 from dair_pll.tensor_utils import (pbmm, deal, spatial_to_point_jacobian)
